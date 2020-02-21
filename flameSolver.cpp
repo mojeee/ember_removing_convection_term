@@ -29,7 +29,7 @@ void FlameSolver::setOptions(const ConfigOptions& _options)
     SplitSolver::setOptions(_options);
     tStart = options.tStart;
     tEnd = options.tEnd;
-
+// first check git
     gas.setOptions(_options);
     grid.setOptions(_options);
 }
