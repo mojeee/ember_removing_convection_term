@@ -29,7 +29,7 @@ void FlameSolver::setOptions(const ConfigOptions& _options)
     SplitSolver::setOptions(_options);
     tStart = options.tStart;
     tEnd = options.tEnd;
-// first check git
+
     gas.setOptions(_options);
     grid.setOptions(_options);
 }
@@ -62,9 +62,9 @@ void FlameSolver::initialize(void)
     loadProfile();
 
     grid.setSize(x.size());
-    convectionSystem.setGas(gas);
-    convectionSystem.setLeftBC(Tleft, Yleft);
-    convectionSystem.setTolerances(options);
+    //convectionSystem.setGas(gas);
+    //convectionSystem.setLeftBC(Tleft, Yleft);
+    //convectionSystem.setTolerances(options);
 
     for (size_t k=0; k<nVars; k++) {
         DiffusionSystem* term = new DiffusionSystem();
@@ -80,7 +80,7 @@ void FlameSolver::initialize(void)
 
     resizeAuxiliary();
 
-    ddtConv.setZero();
+    //ddtConv.setZero();
     ddtDiff.setZero();
     ddtProd.setZero();
 
@@ -156,10 +156,10 @@ void FlameSolver::prepareIntegrators()
     // Diffusion terms
     if (!options.quasi2d) {
         // Diffusion solvers: Energy and momentum
-        diffusionTerms[kMomentum].B = rho.inverse();
+        //diffusionTerms[kMomentum].B = rho.inverse();
         diffusionTerms[kEnergy].B = (rho * cp).inverse();
 
-        diffusionTerms[kMomentum].D = mu;
+        //diffusionTerms[kMomentum].D = mu;
         diffusionTerms[kEnergy].D = lambda;
 
         // Diffusion solvers: Species
@@ -169,10 +169,10 @@ void FlameSolver::prepareIntegrators()
         }
     } else {
         // Diffusion solvers: Energy and momentum
-        diffusionTerms[kMomentum].B.setZero(nPoints);
+        //diffusionTerms[kMomentum].B.setZero(nPoints);
         diffusionTerms[kEnergy].B.setZero(nPoints);
 
-        diffusionTerms[kMomentum].D.setZero(nPoints);
+        //diffusionTerms[kMomentum].D.setZero(nPoints);
         diffusionTerms[kEnergy].D.setZero(nPoints);
 
         // Diffusion solvers: Species
@@ -197,8 +197,8 @@ void FlameSolver::prepareIntegrators()
     }
 
     // Convection terms
-    setConvectionSolverState(tNow);
-    dmatrix ddt = ddtConv + ddtDiff + ddtProd;
+    //setConvectionSolverState(tNow);
+    dmatrix ddt = 0.0*ddtConv + ddtDiff + ddtProd;
     if (options.splittingMethod == "balanced") {
         ddt += ddtCross;
     }
@@ -207,9 +207,9 @@ void FlameSolver::prepareIntegrators()
     drhodt = - rho * (ddt.row(kEnergy).transpose() / T + tmp * Wmx);
 
     assert(mathUtils::notnan(drhodt));
-    convectionSystem.setDensityDerivative(drhodt);
-    convectionSystem.setSplitConstants(splitConstConv);
-    convectionSystem.updateContinuityBoundaryCondition(qDot, options.continuityBC);
+    //convectionSystem.setDensityDerivative(drhodt);
+    //convectionSystem.setSplitConstants(splitConstConv);
+    //convectionSystem.updateContinuityBoundaryCondition(qDot, options.continuityBC);
     splitTimer.stop();
 }
 
@@ -228,12 +228,12 @@ int FlameSolver::finishStep()
     nProfile++;
     nTerminate++;
     nCurrentState++;
-
+/*
     if (debugParameters::debugTimesteps) {
         int nSteps = convectionSystem.getNumSteps();
         logFile.write(format("t = %8.6f (dt = %9.3e) [C: %i]") % t % dt % nSteps);
     }
-
+*/
     setupTimer.resume();
     if (t + 0.5 * dt > tOutput || nOutput >= options.outputStepInterval) {
         calculateQdot();
@@ -408,7 +408,7 @@ bool FlameSolver::checkTerminationCondition(void)
             return true;
         }
     } else if (options.terminationMeasurement == "dTdt") {
-        dvec dTdt = (ddtDiff + ddtConv + ddtProd + ddtCross).row(kEnergy);
+        dvec dTdt = (ddtDiff + ddtConv*0.0 + ddtProd + ddtCross).row(kEnergy);
         double value = (dTdt / T).matrix().norm() / sqrt(static_cast<double>(nPoints));
         logFile.write(format(
             "||1/T * dT/dt|| = %7.3f. Termination threshold = %7.2f") %
@@ -430,7 +430,7 @@ void FlameSolver::writeStateFile
     if (stateWriter) {
         if (updateDerivatives) {
             updateChemicalProperties();
-            convectionSystem.evaluate();
+            //convectionSystem.evaluate();
         }
         stateWriter->eval(fileNameStr, errorFile);
     }
@@ -516,17 +516,17 @@ void FlameSolver::resizeAuxiliary()
         diffusionTerms[k].setGrid(grid);
     }
 
-    convectionSystem.setGrid(grid);
-    convectionSystem.resize(nPoints, nSpec, state);
-    convectionSystem.setLeftBC(Tleft, Yleft);
+    //convectionSystem.setGrid(grid);
+    //convectionSystem.resize(nPoints, nSpec, state);
+    //convectionSystem.setLeftBC(Tleft, Yleft);
 
-    convectionSystem.utwSystem.setStrainFunction(strainfunc);
-    convectionSystem.utwSystem.setRhou(rhou);
-
+    //convectionSystem.utwSystem.setStrainFunction(strainfunc);
+    //convectionSystem.utwSystem.setRhou(rhou);
+/*
     if (options.quasi2d) {
         convectionSystem.setupQuasi2D(vzInterp, vrInterp);
     }
-
+*/
     // Resize the jCorr stabilizer
     jCorrSolver.resize(nPoints);
     jCorrSystem.setGrid(grid);
@@ -712,8 +712,8 @@ void FlameSolver::setDiffusionSolverState(double tInitial)
 
 void FlameSolver::setConvectionSolverState(double tInitial)
 {
-    splitTimer.resume();
-    convectionSystem.setState(tInitial);
+    //splitTimer.resume();
+    //convectionSystem.setState(tInitial);
     splitTimer.stop();
 }
 
@@ -728,7 +728,7 @@ void FlameSolver::setProductionSolverState(double tInitial)
 
 void FlameSolver::integrateConvectionTerms()
 {
-    setConvectionSolverState(tStageStart);
+    /*setConvectionSolverState(tStageStart);
     convectionTimer.start();
     try {
         convectionSystem.integrateToTime(tStageEnd);
@@ -740,7 +740,7 @@ void FlameSolver::integrateConvectionTerms()
     convectionTimer.stop();
 
     splitTimer.resume();
-    convectionSystem.unroll_y();
+    convectionSystem.unroll_y();*/
     splitTimer.stop();
 }
 
@@ -1111,3 +1111,4 @@ void FlameSolver::printPerfString(std::ostream& stats, const std::string& label,
         stats << format("%s %9.3f (%12i)\n") % label % T.getTime() % T.getCallCount();
     }
 }
+
