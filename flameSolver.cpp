@@ -712,8 +712,8 @@ void FlameSolver::setDiffusionSolverState(double tInitial)
 
 void FlameSolver::setConvectionSolverState(double tInitial)
 {
-    //splitTimer.resume();
-    //convectionSystem.setState(tInitial);
+    splitTimer.resume();
+    convectionSystem.setState(tInitial);
     splitTimer.stop();
 }
 
