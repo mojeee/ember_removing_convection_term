@@ -197,7 +197,7 @@ void FlameSolver::prepareIntegrators()
     }
 
     // Convection terms
-    //setConvectionSolverState(tNow);
+    setConvectionSolverState(tNow);
     dmatrix ddt = 0.0*ddtConv + ddtDiff + ddtProd;
     if (options.splittingMethod == "balanced") {
         ddt += ddtCross;
@@ -207,9 +207,9 @@ void FlameSolver::prepareIntegrators()
     drhodt = - rho * (ddt.row(kEnergy).transpose() / T + tmp * Wmx);
 
     assert(mathUtils::notnan(drhodt));
-    //convectionSystem.setDensityDerivative(drhodt);
-    //convectionSystem.setSplitConstants(splitConstConv);
-    //convectionSystem.updateContinuityBoundaryCondition(qDot, options.continuityBC);
+    convectionSystem.setDensityDerivative(drhodt);
+    convectionSystem.setSplitConstants(splitConstConv);
+    convectionSystem.updateContinuityBoundaryCondition(qDot, options.continuityBC);
     splitTimer.stop();
 }
 
@@ -228,12 +228,12 @@ int FlameSolver::finishStep()
     nProfile++;
     nTerminate++;
     nCurrentState++;
-/*
+
     if (debugParameters::debugTimesteps) {
         int nSteps = convectionSystem.getNumSteps();
         logFile.write(format("t = %8.6f (dt = %9.3e) [C: %i]") % t % dt % nSteps);
     }
-*/
+
     setupTimer.resume();
     if (t + 0.5 * dt > tOutput || nOutput >= options.outputStepInterval) {
         calculateQdot();
@@ -430,7 +430,7 @@ void FlameSolver::writeStateFile
     if (stateWriter) {
         if (updateDerivatives) {
             updateChemicalProperties();
-            //convectionSystem.evaluate();
+            convectionSystem.evaluate();
         }
         stateWriter->eval(fileNameStr, errorFile);
     }
@@ -516,17 +516,17 @@ void FlameSolver::resizeAuxiliary()
         diffusionTerms[k].setGrid(grid);
     }
 
-    //convectionSystem.setGrid(grid);
-    //convectionSystem.resize(nPoints, nSpec, state);
-    //convectionSystem.setLeftBC(Tleft, Yleft);
+    convectionSystem.setGrid(grid);
+    convectionSystem.resize(nPoints, nSpec, state);
+    convectionSystem.setLeftBC(Tleft, Yleft);
 
-    //convectionSystem.utwSystem.setStrainFunction(strainfunc);
-    //convectionSystem.utwSystem.setRhou(rhou);
-/*
+    convectionSystem.utwSystem.setStrainFunction(strainfunc);
+    convectionSystem.utwSystem.setRhou(rhou);
+
     if (options.quasi2d) {
         convectionSystem.setupQuasi2D(vzInterp, vrInterp);
     }
-*/
+
     // Resize the jCorr stabilizer
     jCorrSolver.resize(nPoints);
     jCorrSystem.setGrid(grid);
