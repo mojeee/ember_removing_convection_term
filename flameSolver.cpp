@@ -62,9 +62,9 @@ void FlameSolver::initialize(void)
     loadProfile();
 
     grid.setSize(x.size());
-    //convectionSystem.setGas(gas);
-    //convectionSystem.setLeftBC(Tleft, Yleft);
-    //convectionSystem.setTolerances(options);
+    convectionSystem.setGas(gas);
+    convectionSystem.setLeftBC(Tleft, Yleft);
+    convectionSystem.setTolerances(options);
 
     for (size_t k=0; k<nVars; k++) {
         DiffusionSystem* term = new DiffusionSystem();
@@ -80,7 +80,7 @@ void FlameSolver::initialize(void)
 
     resizeAuxiliary();
 
-    //ddtConv.setZero();
+    ddtConv.setZero();
     ddtDiff.setZero();
     ddtProd.setZero();
 
@@ -156,10 +156,10 @@ void FlameSolver::prepareIntegrators()
     // Diffusion terms
     if (!options.quasi2d) {
         // Diffusion solvers: Energy and momentum
-        //diffusionTerms[kMomentum].B = rho.inverse();
+        diffusionTerms[kMomentum].B = rho.inverse();
         diffusionTerms[kEnergy].B = (rho * cp).inverse();
 
-        //diffusionTerms[kMomentum].D = mu;
+        diffusionTerms[kMomentum].D = mu;
         diffusionTerms[kEnergy].D = lambda;
 
         // Diffusion solvers: Species
@@ -169,10 +169,10 @@ void FlameSolver::prepareIntegrators()
         }
     } else {
         // Diffusion solvers: Energy and momentum
-        //diffusionTerms[kMomentum].B.setZero(nPoints);
+        diffusionTerms[kMomentum].B.setZero(nPoints);
         diffusionTerms[kEnergy].B.setZero(nPoints);
 
-        //diffusionTerms[kMomentum].D.setZero(nPoints);
+        diffusionTerms[kMomentum].D.setZero(nPoints);
         diffusionTerms[kEnergy].D.setZero(nPoints);
 
         // Diffusion solvers: Species
@@ -1111,4 +1111,5 @@ void FlameSolver::printPerfString(std::ostream& stats, const std::string& label,
         stats << format("%s %9.3f (%12i)\n") % label % T.getTime() % T.getCallCount();
     }
 }
+
 
